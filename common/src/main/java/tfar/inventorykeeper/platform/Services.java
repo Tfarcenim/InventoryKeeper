@@ -1,7 +1,7 @@
-package com.example.examplemod.platform;
+package tfar.inventorykeeper.platform;
 
-import com.example.examplemod.Constants;
-import com.example.examplemod.platform.services.IPlatformHelper;
+import tfar.inventorykeeper.Constants;
+import tfar.inventorykeeper.platform.services.IPlatformHelper;
 
 import java.util.ServiceLoader;
 

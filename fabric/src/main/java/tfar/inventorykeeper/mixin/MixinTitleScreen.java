@@ -1,6 +1,6 @@
-package com.example.examplemod.mixin;
+package tfar.inventorykeeper.mixin;
 
-import com.example.examplemod.Constants;
+import tfar.inventorykeeper.Constants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.TitleScreen;
 import org.spongepowered.asm.mixin.Mixin;
