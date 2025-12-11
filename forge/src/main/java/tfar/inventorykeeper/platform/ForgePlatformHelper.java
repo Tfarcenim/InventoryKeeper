@@ -1,8 +1,26 @@
 package tfar.inventorykeeper.platform;
 
+import net.minecraft.core.MappedRegistry;
+import net.minecraft.core.Registry;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import org.apache.commons.lang3.tuple.Pair;
+import tfar.inventorykeeper.Constants;
+import tfar.inventorykeeper.InventoryKeeper;
+import tfar.inventorykeeper.InventoryKeeperForge;
+import tfar.inventorykeeper.PacketHandlerForge;
+import tfar.inventorykeeper.network.client.S2CModPacket;
+import tfar.inventorykeeper.network.server.C2SModPacket;
 import tfar.inventorykeeper.platform.services.IPlatformHelper;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.FMLLoader;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class ForgePlatformHelper implements IPlatformHelper {
 
@@ -23,4 +41,42 @@ public class ForgePlatformHelper implements IPlatformHelper {
 
         return !FMLLoader.isProduction();
     }
+
+    @Override
+    public <F> void registerAll(Map<String, ? extends F> map, Registry<F> registry, Class<? extends F> filter) {
+        List<Pair<ResourceLocation, Supplier<Object>>> list = InventoryKeeperForge.registerLater.computeIfAbsent(registry, k -> new ArrayList<>());
+        for (Map.Entry<String, ? extends F> entry : map.entrySet()) {
+            list.add(Pair.of(new ResourceLocation(Constants.MOD_ID, entry.getKey()), entry::getValue));
+        }
+    }
+
+    @Override
+    public <F> void unfreeze(Registry<F> registry) {
+        ((MappedRegistry<F>)registry).unfreeze();
+    }
+
+    int i;
+
+    @Override
+    public <MSG extends S2CModPacket> void registerClientPacket(Class<MSG> packetLocation, Function<FriendlyByteBuf, MSG> reader) {
+        PacketHandlerForge.INSTANCE.registerMessage(i++, packetLocation, MSG::write, reader, PacketHandlerForge.wrapS2C());
+    }
+
+    @Override
+    public <MSG extends C2SModPacket> void registerServerPacket(Class<MSG> packetLocation, Function<FriendlyByteBuf, MSG> reader) {
+        PacketHandlerForge.INSTANCE.registerMessage(i++, packetLocation, MSG::write, reader, PacketHandlerForge.wrapC2S());
+    }
+
+    @Override
+    public void sendToClient(S2CModPacket msg, ServerPlayer player) {
+        PacketHandlerForge.sendToClient(msg, player);
+    }
+
+    @Override
+    public void sendToServer(C2SModPacket msg) {
+        PacketHandlerForge.sendToServer(msg);
+    }
+
+
+
 }

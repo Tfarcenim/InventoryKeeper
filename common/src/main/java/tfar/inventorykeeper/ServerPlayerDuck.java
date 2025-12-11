@@ -1,6 +1,9 @@
 package tfar.inventorykeeper;
 
+import java.util.List;
+
 public interface ServerPlayerDuck {
 
-    SavedInventory getSavedInventory();
+    List<SavedInventory> getSavedInventories();
+    void setSavedInventories(List<SavedInventory> savedInventories);
 }

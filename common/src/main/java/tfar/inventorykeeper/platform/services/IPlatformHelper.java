@@ -1,5 +1,17 @@
 package tfar.inventorykeeper.platform.services;
 
+import net.minecraft.core.Registry;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
+import tfar.inventorykeeper.network.client.S2CModPacket;
+import tfar.inventorykeeper.network.server.C2SModPacket;
+
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.function.Function;
+
 public interface IPlatformHelper {
 
     /**
@@ -33,4 +45,34 @@ public interface IPlatformHelper {
 
         return isDevelopmentEnvironment() ? "development" : "production";
     }
+    default  <F> void registerAll(Class<?> clazz, Registry<F> registry, Class<? extends F> filter) {
+        Map<String,F> map = new HashMap<>();
+        unfreeze(registry);
+        for (Field field : clazz.getFields()) {
+            try {
+                Object o = field.get(null);
+                if (filter.isInstance(o)) {
+                    map.put(field.getName().toLowerCase(Locale.ROOT),(F)o);
+                }
+            } catch (IllegalAccessException illegalAccessException) {
+                illegalAccessException.printStackTrace();
+            }
+        }
+        registerAll(map,registry,filter);
+    }
+
+    default <F> void unfreeze(Registry<F> registry) {
+
+    }
+
+    <F> void registerAll(Map<String,? extends F> map, Registry<F> registry, Class<? extends F> filter);
+
+    <MSG extends S2CModPacket> void registerClientPacket(Class<MSG> packetLocation, Function<FriendlyByteBuf,MSG> reader);
+
+    <MSG extends C2SModPacket> void registerServerPacket(Class<MSG> packetLocation, Function<FriendlyByteBuf,MSG> reader);
+
+
+    void sendToClient(S2CModPacket msg, ServerPlayer player);
+    void sendToServer(C2SModPacket msg);
+
 }
