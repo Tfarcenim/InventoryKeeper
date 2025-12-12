@@ -4,19 +4,14 @@ import com.google.common.collect.ImmutableList;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
-import net.minecraft.world.MenuProvider;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 
-public class SavedInventory implements Container, MenuProvider {
+public class SavedInventory implements Container{
 
     public final NonNullList<ItemStack> items = NonNullList.withSize(36, ItemStack.EMPTY);
     public final NonNullList<ItemStack> armor = NonNullList.withSize(4, ItemStack.EMPTY);
@@ -146,16 +141,5 @@ public class SavedInventory implements Container, MenuProvider {
     @Override
     public void clearContent() {
         this.compartments.forEach(NonNullList::clear);
-    }
-
-    @Override
-    public Component getDisplayName() {
-        return Component.literal("Inventory Snapshot");
-    }
-
-    @Nullable
-    @Override
-    public AbstractContainerMenu createMenu(int i, Inventory inventory, Player player) {
-        return new SavedInventoryMenu(i,inventory,this);
     }
 }

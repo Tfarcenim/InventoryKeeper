@@ -1,6 +1,7 @@
 package tfar.inventorykeeper;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -10,6 +11,7 @@ public class SavedInventoryScreen extends AbstractContainerScreen<SavedInventory
     private static final ResourceLocation TEXTURE = InventoryKeeper.id("textures/gui/inventory.png");
     public SavedInventoryScreen(SavedInventoryMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
+        titleLabelX+=69;
     }
 
     @Override
@@ -20,8 +22,27 @@ public class SavedInventoryScreen extends AbstractContainerScreen<SavedInventory
     }
 
     @Override
+    protected void init() {
+        super.init();
+        addRenderableWidget(Button.builder(Component.literal("<"),button -> pressLeft()).bounds(leftPos+100,topPos+15,20,20).build());
+        addRenderableWidget(Button.builder(Component.literal(">"),button -> pressRight()).bounds(leftPos+130,topPos+15,20,20).build());
+    }
+
+    void pressLeft() {
+        sendButtonToServer(SavedInventoryMenu.Action.LEFT);
+    }
+
+    void pressRight() {
+        sendButtonToServer(SavedInventoryMenu.Action.RIGHT);
+    }
+
+    private void sendButtonToServer(SavedInventoryMenu.Action action) {
+        this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, action.ordinal());
+    }
+
+    @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 0x404040, false);
+        guiGraphics.drawString(this.font, this.title.copy().append(" "+menu.dataSlot.get()), this.titleLabelX, this.titleLabelY, 0x404040, false);
     }
 
     @Override
