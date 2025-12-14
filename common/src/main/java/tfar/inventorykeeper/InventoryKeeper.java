@@ -3,6 +3,7 @@ package tfar.inventorykeeper;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.resources.ResourceLocation;
@@ -32,9 +33,9 @@ public class InventoryKeeper {
         // your own abstraction layer. You can learn more about this in our provided services class. In this example
         // we have an interface in the common code and use a loader specific implementation to delegate our call to
         // the platform specific approach.
-        Class<MenuType<?>> typeClass1 =(Class<MenuType<?>>)(Object) MenuType.class;
+        Class<MenuType<?>> typeClass1 = (Class<MenuType<?>>) (Object) MenuType.class;
 
-        Services.PLATFORM.registerAll(Init.class,BuiltInRegistries.MENU, typeClass1);
+        Services.PLATFORM.registerAll(Init.class, BuiltInRegistries.MENU, typeClass1);
     }
 
     public static void clone(ServerPlayer oldPlayer, ServerPlayer newPlayer, boolean wasDeath) {
@@ -45,7 +46,7 @@ public class InventoryKeeper {
 
     private static void copySavedInventories(ServerPlayer oldPlayer, ServerPlayer newPlayer) {
         List<SavedInventory> oldSavedInventories = ((ServerPlayerDuck) oldPlayer).getSavedInventories();
-        ((ServerPlayerDuck)newPlayer).setSavedInventories(oldSavedInventories);
+        ((ServerPlayerDuck) newPlayer).setSavedInventories(oldSavedInventories);
     }
 
     public static void saveItems(Player player) {
@@ -64,18 +65,58 @@ public class InventoryKeeper {
     }
 
     public static void commands(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(Commands.literal(Constants.MOD_ID)
-                .then(Commands.argument("index", IntegerArgumentType.integer(0))
-                        .executes(InventoryKeeper::restore)
+        dispatcher.register(Commands.literal(Constants.MOD_ID).requires(stack -> stack.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .then(Commands.literal("unlock")
+                        .executes(InventoryKeeper::unlock)
+                )
+                .then(Commands.literal("restore")
+                        .then(Commands.argument("index", IntegerArgumentType.integer(0))
+                                .executes(InventoryKeeper::restore)
+                        )
                 )
         );
     }
 
-    static int restore(CommandContext<CommandSourceStack> context) {
-        return 0;
+    static int restore(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        CommandSourceStack commandSourceStack = context.getSource();
+        ServerPlayer player = commandSourceStack.getPlayerOrException();
+        int index = IntegerArgumentType.getInteger(context,"index");
+        List<SavedInventory> savedInventoryList = ((ServerPlayerDuck)player).getSavedInventories();
+
+        if (savedInventoryList.isEmpty()) {
+            return 0;
+        }
+
+        if (index>=savedInventoryList.size()) return 0;
+        restoreAndClose(player,savedInventoryList,index);
+        return 1;
+    }
+
+    public static void restoreAndClose(ServerPlayer player,List<SavedInventory> savedInventories,int index) {
+        SavedInventory savedInventory = savedInventories.get(index);
+        if (player.containerMenu instanceof SavedInventoryMenu) {
+            player.closeContainer();
+        }
+
+        savedInventory.restore(player);
+        savedInventories.remove(index);
+    }
+
+    static int unlock(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        CommandSourceStack commandSourceStack = context.getSource();
+        ServerPlayer player = commandSourceStack.getPlayerOrException();
+        List<SavedInventory> savedInventoryList = ((ServerPlayerDuck)player).getSavedInventories();
+
+        if (savedInventoryList.isEmpty()) {
+            return 0;
+        }
+
+        savedInventoryList.forEach(SavedInventory::open);
+
+        return savedInventoryList.size();
     }
 
     public static ResourceLocation id(String packet) {
-        return new ResourceLocation(Constants.MOD_ID,packet);
+        return new ResourceLocation(Constants.MOD_ID, packet);
     }
 }

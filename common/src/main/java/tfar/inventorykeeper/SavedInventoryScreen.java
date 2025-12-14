@@ -19,13 +19,18 @@ public class SavedInventoryScreen extends AbstractContainerScreen<SavedInventory
         this.renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
+        button.active = menu.open.get()>0;
     }
+
+    protected Button button;
 
     @Override
     protected void init() {
         super.init();
-        addRenderableWidget(Button.builder(Component.literal("<"),button -> pressLeft()).bounds(leftPos+100,topPos+15,20,20).build());
-        addRenderableWidget(Button.builder(Component.literal(">"),button -> pressRight()).bounds(leftPos+130,topPos+15,20,20).build());
+        addRenderableWidget(Button.builder(Component.literal("<"),button -> pressLeft()).bounds(leftPos+100,topPos+16,20,20).build());
+        addRenderableWidget(Button.builder(Component.literal(">"),button -> pressRight()).bounds(leftPos+130,topPos+16,20,20).build());
+        button = Button.builder(Component.literal("Restore"),button -> restoreInventory()).bounds(leftPos+100,topPos+40,50,20).build();
+        addRenderableWidget(button);
     }
 
     void pressLeft() {
@@ -34,6 +39,10 @@ public class SavedInventoryScreen extends AbstractContainerScreen<SavedInventory
 
     void pressRight() {
         sendButtonToServer(SavedInventoryMenu.Action.RIGHT);
+    }
+
+    void restoreInventory() {
+        sendButtonToServer(SavedInventoryMenu.Action.RESTORE);
     }
 
     private void sendButtonToServer(SavedInventoryMenu.Action action) {

@@ -1,6 +1,7 @@
 package tfar.inventorykeeper;
 
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
@@ -20,7 +21,8 @@ public class InventoryKeeperForgeClient {
     static void addButton(ScreenEvent.Init.Post event) {
         Screen screen = event.getScreen();
         if (screen instanceof InventoryScreen inventoryScreen) {
-            Button button = Button.builder(Component.literal("P"),button1 -> {
+            ImageButton imageButton;
+            Button button = Button.builder(Component.literal("\uD83D\uDC80"),button1 -> {
                 C2SButtonPacket.OPEN.send();
             }).bounds(inventoryScreen.getGuiLeft()+75,inventoryScreen.getGuiTop()+40,20,20).build();
             event.addListener(button);

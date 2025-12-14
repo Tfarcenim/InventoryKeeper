@@ -32,17 +32,19 @@ public abstract class PlayerMixin extends LivingEntity implements ServerPlayerDu
     @Inject(method = "addAdditionalSaveData",at = @At("HEAD"))
     private void addExtraData(CompoundTag compound, CallbackInfo ci) {
         ListTag listTag = new ListTag();
-        savedInventories.forEach(savedInventory -> listTag.add(savedInventory.save(new ListTag())));
+        savedInventories.forEach(savedInventory -> listTag.add(savedInventory.save()));
         compound.put("SavedInventories", listTag);
     }
 
     @Inject(method = "readAdditionalSaveData",at = @At("HEAD"))
     private void readExtraData(CompoundTag compound, CallbackInfo ci) {
-        ListTag listtag = compound.getList("SavedInventories", Tag.TAG_LIST);
+        ListTag listtag = compound.getList("SavedInventories", Tag.TAG_COMPOUND);
         for (Tag tag : listtag) {
             SavedInventory savedInventory = new SavedInventory();
-            savedInventory.load((ListTag) tag);
-            savedInventories.add(savedInventory);
+            savedInventory.load((CompoundTag) tag);
+            if (savedInventory.isEmpty()) {
+                savedInventories.add(savedInventory);
+            }
         }
 
     }

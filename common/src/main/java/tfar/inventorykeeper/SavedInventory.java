@@ -4,8 +4,10 @@ import com.google.common.collect.ImmutableList;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.Collection;
@@ -17,6 +19,7 @@ public class SavedInventory implements Container{
     public final NonNullList<ItemStack> armor = NonNullList.withSize(4, ItemStack.EMPTY);
     public final NonNullList<ItemStack> offhand = NonNullList.withSize(1, ItemStack.EMPTY);
     private final List<NonNullList<ItemStack>> compartments = ImmutableList.of(this.items, this.armor, this.offhand);
+    boolean open;
 
     @Override
     public int getContainerSize() {
@@ -27,6 +30,22 @@ public class SavedInventory implements Container{
     public boolean isEmpty() {
         return compartments.stream().flatMap(Collection::stream).allMatch(ItemStack::isEmpty);
     }
+
+    public void open() {
+        open = true;
+    }
+
+
+    public final DataSlot dataSlot = new DataSlot() {
+        @Override
+        public int get() {
+            return open ? 1 : 0;
+        }
+
+        @Override
+        public void set(int value) {
+        }
+    };
 
     /**
      * Returns the stack in the given slot.
@@ -78,7 +97,9 @@ public class SavedInventory implements Container{
     /**
      * Writes the inventory out as a list of compound tags. This is where the slot indices are used (+100 for armor, +80 for crafting).
      */
-    public ListTag save(ListTag listTag) {
+    public CompoundTag save() {
+        CompoundTag tag = new CompoundTag();
+        ListTag listTag = new ListTag();
         for (int i = 0; i < this.items.size(); i++) {
             if (!this.items.get(i).isEmpty()) {
                 CompoundTag compoundtag = new CompoundTag();
@@ -103,13 +124,17 @@ public class SavedInventory implements Container{
             }
         }
 
-        return listTag;
+        tag.put("items",listTag);
+        tag.putBoolean("open", open);
+
+        return tag;
     }
 
     /**
      * Reads from the given tag list and fills the slots in the inventory with the correct items.
      */
-    public void load(ListTag listTag) {
+    public void load(CompoundTag tag) {
+        ListTag listTag = tag.getList("items", ListTag.TAG_LIST);
         this.items.clear();
         this.armor.clear();
         this.offhand.clear();
@@ -126,6 +151,7 @@ public class SavedInventory implements Container{
                 this.offhand.set(j - 150, itemstack);
             }
         }
+        open = tag.getBoolean("open");
     }
 
     @Override
@@ -141,5 +167,34 @@ public class SavedInventory implements Container{
     @Override
     public void clearContent() {
         this.compartments.forEach(NonNullList::clear);
+    }
+
+    public void restore(ServerPlayer player) {
+        for (int i = 0; i < items.size(); i++) {
+            ItemStack stack = items.get(i);
+            if (player.getInventory().items.get(i).isEmpty()) {
+                player.getInventory().items.set(i,stack);
+            } else {
+                player.drop(stack,false);
+            }
+        }
+
+        for (int i = 0; i < armor.size(); i++) {
+            ItemStack stack = armor.get(i);
+            if (player.getInventory().armor.get(i).isEmpty()) {
+                player.getInventory().armor.set(i,stack);
+            } else {
+                player.drop(stack,false);
+            }
+        }
+
+        for (int i = 0; i < offhand.size(); i++) {
+            ItemStack stack = offhand.get(i);
+            if (player.getInventory().offhand.get(i).isEmpty()) {
+                player.getInventory().offhand.set(i,stack);
+            } else {
+                player.drop(stack,false);
+            }
+        }
     }
 }
