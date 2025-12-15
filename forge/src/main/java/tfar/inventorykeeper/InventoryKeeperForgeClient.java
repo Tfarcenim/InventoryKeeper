@@ -21,11 +21,10 @@ public class InventoryKeeperForgeClient {
     static void addButton(ScreenEvent.Init.Post event) {
         Screen screen = event.getScreen();
         if (screen instanceof InventoryScreen inventoryScreen) {
-            ImageButton imageButton;
-            Button button = Button.builder(Component.literal("\uD83D\uDC80"),button1 -> {
-                C2SButtonPacket.OPEN.send();
-            }).bounds(inventoryScreen.getGuiLeft()+75,inventoryScreen.getGuiTop()+40,20,20).build();
-            event.addListener(button);
+            ImageButton imageButton = new ImageButton(inventoryScreen.getGuiLeft()+77,inventoryScreen.getGuiTop()+40,16,16,0,0,
+                    0,SavedInventoryScreen.SKULL,16,16,button1 -> C2SButtonPacket.OPEN.send());
+            //Button button = Button.builder(Component.literal("\uD83D\uDC80"),).bounds(inventoryScreen.getGuiLeft()+75,inventoryScreen.getGuiTop()+40,20,20).build();
+            event.addListener(imageButton);
         }
     }
 

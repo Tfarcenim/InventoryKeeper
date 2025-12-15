@@ -6,6 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
@@ -67,11 +68,15 @@ public class InventoryKeeper {
     public static void commands(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal(Constants.MOD_ID).requires(stack -> stack.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 .then(Commands.literal("unlock")
-                        .executes(InventoryKeeper::unlock)
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .executes(InventoryKeeper::unlock)
+                        )
                 )
                 .then(Commands.literal("restore")
-                        .then(Commands.argument("index", IntegerArgumentType.integer(0))
-                                .executes(InventoryKeeper::restore)
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .then(Commands.argument("index", IntegerArgumentType.integer(0))
+                                        .executes(InventoryKeeper::restore)
+                                )
                         )
                 )
         );
@@ -79,20 +84,20 @@ public class InventoryKeeper {
 
     static int restore(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack commandSourceStack = context.getSource();
-        ServerPlayer player = commandSourceStack.getPlayerOrException();
-        int index = IntegerArgumentType.getInteger(context,"index");
-        List<SavedInventory> savedInventoryList = ((ServerPlayerDuck)player).getSavedInventories();
+        ServerPlayer player = EntityArgument.getPlayer(context, "player");
+        int index = IntegerArgumentType.getInteger(context, "index");
+        List<SavedInventory> savedInventoryList = ((ServerPlayerDuck) player).getSavedInventories();
 
         if (savedInventoryList.isEmpty()) {
             return 0;
         }
 
-        if (index>=savedInventoryList.size()) return 0;
-        restoreAndClose(player,savedInventoryList,index);
+        if (index >= savedInventoryList.size()) return 0;
+        restoreAndClose(player, savedInventoryList, index);
         return 1;
     }
 
-    public static void restoreAndClose(ServerPlayer player,List<SavedInventory> savedInventories,int index) {
+    public static void restoreAndClose(ServerPlayer player, List<SavedInventory> savedInventories, int index) {
         SavedInventory savedInventory = savedInventories.get(index);
         if (player.containerMenu instanceof SavedInventoryMenu) {
             player.closeContainer();
@@ -104,8 +109,8 @@ public class InventoryKeeper {
 
     static int unlock(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandSourceStack commandSourceStack = context.getSource();
-        ServerPlayer player = commandSourceStack.getPlayerOrException();
-        List<SavedInventory> savedInventoryList = ((ServerPlayerDuck)player).getSavedInventories();
+        ServerPlayer player = EntityArgument.getPlayer(context, "player");
+        List<SavedInventory> savedInventoryList = ((ServerPlayerDuck) player).getSavedInventories();
 
         if (savedInventoryList.isEmpty()) {
             return 0;

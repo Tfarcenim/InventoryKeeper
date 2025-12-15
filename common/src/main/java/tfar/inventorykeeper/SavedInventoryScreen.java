@@ -9,6 +9,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 public class SavedInventoryScreen extends AbstractContainerScreen<SavedInventoryMenu> {
     private static final ResourceLocation TEXTURE = InventoryKeeper.id("textures/gui/inventory.png");
+    static final ResourceLocation SKULL = InventoryKeeper.id("textures/gui/skull.png");
     public SavedInventoryScreen(SavedInventoryMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
         titleLabelX+=69;
